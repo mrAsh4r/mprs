@@ -13,7 +13,7 @@ from pathlib import Path
 
 def load_config(config_path):
     """Загрузка конфигурационного файла"""
-    config = configparser.ConfigParser()
+    config = configparser.ConfigParser(inline_comment_prefixes=('#', ';'))
     
     # Значения по умолчанию
     config.read_dict({
