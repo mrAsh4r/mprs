@@ -1,0 +1,80 @@
+# MPRS Rules Configuration
+# Правила обнаружения атак для MVP
+
+# SSH Bruteforce - превышение лимита попыток подключения
+ssh_bruteforce:
+  type: rate
+  proto: tcp
+  dst_port: 22
+  threshold: 10        # попыток за окно
+  window: 60           # секунд
+  action: soft_block
+  description: "SSH brute force attack detected"
+
+# HTTP Bad User-Agent - подозрительные User-Agent строки
+http_bad_ua:
+  type: signature
+  proto: tcp
+  dst_port: [80, 8080, 443]
+  regex: "sqlmap|nikto|curl.*bot|python-requests|masscan|nmap|gobuster"
+  action: soft_block
+  description: "Suspicious HTTP User-Agent detected"
+
+# SYN Flood - превышение лимита SYN пакетов
+syn_flood:
+  type: rate
+  proto: tcp
+  flags: "S"
+  threshold: 50        # SYN пакетов за окно
+  window: 10           # секунд
+  action: hard_block
+  description: "SYN flood attack detected"
+
+# Port scan - сканирование портов
+port_scan:
+  type: rate
+  proto: tcp
+  flags: "S"
+  unique_ports: true   # считать уникальные порты
+  threshold: 20        # портов за окно
+  window: 30           # секунд
+  action: soft_block
+  description: "Port scan detected"
+
+# ICMP Flood - превышение лимита ICMP пакетов
+icmp_flood:
+  type: rate
+  proto: icmp
+  threshold: 30        # пакетов за окно
+  window: 10           # секунд
+  action: soft_block
+  description: "ICMP flood detected"
+
+# DNS Amplification - подозрительные DNS запросы
+dns_amplification:
+  type: rate
+  proto: udp
+  dst_port: 53
+  threshold: 100       # запросов за окно
+  window: 30           # секунд
+  action: soft_block
+  description: "DNS amplification attack detected"
+
+# HTTP Flood - превышение лимита HTTP запросов
+http_flood:
+  type: rate
+  proto: tcp
+  dst_port: [80, 443]
+  threshold: 100       # запросов за окно
+  window: 60           # секунд
+  action: soft_block
+  description: "HTTP flood detected"
+
+# Web shells detection - поиск веб-шеллов по URI
+web_shells:
+  type: signature
+  proto: tcp
+  dst_port: [80, 443]
+  uri_regex: "shell|webshell|cmd\\.php|c99\\.php|r57\\.php"
+  action: hard_block
+  description: "Web shell access attempt detected"
