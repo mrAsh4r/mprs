@@ -97,9 +97,27 @@ class TrafficAnalyzer:
         """Проверка rate-based правила"""
         try:
             src_ip = packet_info['src_ip']
+            dst_ip = packet_info['dst_ip']
             current_time = packet_info['timestamp']
             window = rule.get('window', 60)
             threshold = rule.get('threshold', 10)
+            
+            # ИСПРАВЛЕНИЕ: Игнорируем исходящий трафик с локального сервера
+            if src_ip == dst_ip:  # Локальный трафик
+                return False
+                
+            # Получаем локальный IP сервера
+            try:
+                import socket
+                hostname = socket.gethostname()
+                local_ip = socket.gethostbyname(hostname)
+                
+                # Игнорируем исходящие соединения от сервера
+                if src_ip == local_ip:
+                    return False
+                    
+            except:
+                pass
             
             # Проверка протокола
             if 'proto' in rule and not self._match_protocol(packet_info['proto'], rule['proto']):
@@ -119,14 +137,26 @@ class TrafficAnalyzer:
             if rule.get('unique_ports', False):
                 dst_port = packet_info.get('dst_port')
                 if dst_port:
-                    # Добавляем порт в набор для данного IP
-                    self.port_scan_counters[src_ip].add(dst_port)
-                    
-                    # Очищаем старые записи (простая реализация)
-                    if len(self.port_scan_counters[src_ip]) >= threshold:
-                        unique_ports = len(self.port_scan_counters[src_ip])
-                        if unique_ports >= threshold:
-                            return True
+                    # ИСПРАВЛЕНИЕ: Только входящие SYN пакеты считаем сканированием
+                    # Проверяем, что это входящий трафик
+                    try:
+                        import ipaddress
+                        src_net = ipaddress.ip_address(src_ip)
+                        dst_net = ipaddress.ip_address(dst_ip)
+                        
+                        # Если источник - внешний IP, а получатель - локальный
+                        if not src_net.is_private and (dst_net.is_private or dst_ip == local_ip):
+                            # Добавляем порт в набор для данного IP
+                            self.port_scan_counters[src_ip].add(dst_port)
+                            
+                            # Очищаем старые записи (простая реализация)
+                            if len(self.port_scan_counters[src_ip]) >= threshold:
+                                unique_ports = len(self.port_scan_counters[src_ip])
+                                if unique_ports >= threshold:
+                                    return True
+                    except:
+                        pass
+                        
                 return False
             
             # Обычная rate проверка

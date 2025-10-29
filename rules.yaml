@@ -40,6 +40,7 @@ port_scan:
   window: 30           # секунд
   action: soft_block
   description: "Port scan detected"
+  direction: "inbound"  # Новый параметр
 
 # ICMP Flood - превышение лимита ICMP пакетов
 icmp_flood:

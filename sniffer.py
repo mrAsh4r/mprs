@@ -20,7 +20,7 @@ class PacketSniffer:
         self.running = False
         
         # Настройки захвата
-        self.interface = config.get('CAPTURE', 'interface', fallback='eth0')
+        self.interface = config.get('GENERAL', 'interface', fallback='eth0')
         self.bpf_filter = config.get('CAPTURE', 'bpf_filter', fallback='tcp or udp or icmp')
         self.promisc = config.getboolean('CAPTURE', 'promisc_mode', fallback=True)
         self.snaplen = config.getint('CAPTURE', 'snaplen', fallback=1500)
